@@ -66,3 +66,27 @@ inseura-app/
 ```bash
 git clone https://github.com/CamiloEEN/ImageVulnWebApp.git
 cd ImageVulnWebApp
+```
+
+2. Levanta todo con Docker:
+
+```bash
+docker-compose up --build
+```
+
+3. Accede a la app:
+
+- Frontend: http://localhost:5173
+
+- Backend API: http://localhost:8000
+
+
+## 👨‍💻 Autor
+Camilo Eduardo Echeverry Naranjo
+Estudiante de Máster en Ciberseguridad
+Especialidad: Hacking Ético y Desarrollo de Aplicaciones Seguras
+
+## 📜 Licencia
+Este proyecto se usa exclusivamente con fines educativos y de investigación en ciberseguridad. No debe ser utilizado en producción ni en entornos no controlados.
+
+

@@ -1,6 +1,8 @@
+import './Footer.css'
+
 function Footer() {
   return (
-    <footer style={{ padding: '1rem', marginTop: '2rem', borderTop: '1px solid #ccc' }}>
+    <footer className='footer'>
       <p>© 2025 Camilo Eduardo Echeverry — Proyecto académico de Hacking Ético</p>
     </footer>
   );

@@ -14,7 +14,7 @@ function Login() {
         <input type='text' id='username' name='username' required></input>
 
         <label htmlFor='password'>Contraseña: </label>
-        <input type='text' id='password' name='password' required></input>
+        <input type='password' id='password' name='password' required></input>
 
         <button type='submit'>Entrar</button>
 

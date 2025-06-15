@@ -1,8 +1,8 @@
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import './Editor.css'
+import './Editor.css';
+import { useRef, useEffect } from 'react';
 
-import { useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement } from 'chart.js';
 
@@ -10,45 +10,74 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 
 function Editor() {
 
-  //link the values of q0
-  const [q0Red, setQ0Red] = useState(128); // default value
+  const q0RedInputRef = useRef(null);
+  const q0RedSliderRef = useRef(null);
+  const q0GreenInputRef = useRef(null);
+  const q0GreenSliderRef = useRef(null);
+  const q0BlueInputRef = useRef(null);
+  const q0BlueSliderRef = useRef(null);
 
-  const handleQ0RedChange = (value) => {
-    const numeric = Number(value);
-    if (!isNaN(numeric)) setQ0Red(numeric)
-      else{setQ0Red(128)};
-  };
+  const lambdaRedInputRef = useRef(null);
+  const lambdaGreenInputRef = useRef(null);
+  const lambdaBlueInputRef = useRef(null);
+  const lambdaRedSliderRef = useRef(null);
+  const lambdaGreenSliderRef = useRef(null);
+  const lambdaBlueSliderRef = useRef(null);
 
-  const [q0Green, setQ0Green] = useState(128); // default value
+  useEffect(() => {
+    const bindSliderToInput = (input, slider) => {
+      input.addEventListener('input', () => {
+        const val = (input.value);
+        if (!isNaN(val) && val >= 0 && val <= 255) {
+          slider.value = val;
+        }
+      });
+      slider.addEventListener('input', () => {
+        input.value = slider.value;
+      });
+    };
 
-  const handleQ0GreenChange = (value) => {
-    const numeric = Number(value);
-    if (!isNaN(numeric)) setQ0Green(numeric)
-      else{setQ0Green(128)};
-  };
+    bindSliderToInput(q0RedInputRef.current, q0RedSliderRef.current);
+    bindSliderToInput(q0GreenInputRef.current, q0GreenSliderRef.current);
+    bindSliderToInput(q0BlueInputRef.current, q0BlueSliderRef.current);
 
-  const [q0Blue, setQ0Blue] = useState(128); // default value
+    bindSliderToInput(lambdaRedInputRef.current, lambdaRedSliderRef.current);
+    bindSliderToInput(lambdaGreenInputRef.current, lambdaGreenSliderRef.current);
+    bindSliderToInput(lambdaBlueInputRef.current, lambdaBlueSliderRef.current);
+  }, []);
 
-  const handleQ0BlueChange = (value) => {
-    const numeric = Number(value);
-    if (!isNaN(numeric)) setQ0Blue(numeric)
-      else{setQ0Blue(128)};
-  };
-
-// Plot Data and options
   const data = {
-    labels: Array.from({ length: 256 }, (_, i) => i),
-    datasets: [
-      {
-        label: 'Transformación: y = x',
-        data: Array.from({ length: 256 }, (_, i) => i),
-        borderColor: 'blue',
-        borderWidth: 2,
-        fill: false,
-        pointRadius: 0,
-      },
-    ],
-  };
+  labels: Array.from({ length: 256 }, (_, i) => i),
+  datasets: [
+    {
+      label: 'Red',
+      data: Array.from({ length: 256 }, (_, i) => i),           // ← tu vector de 256 valores para rojo
+      borderColor: 'red',
+      borderWidth: 2,
+      fill: false,
+      pointRadius: 0,
+    },
+    {
+      label: 'Green',
+      data: Array.from({ length: 256 }, (_, i) => i*i/255),         // ← tu vector de 256 valores para verde
+      borderColor: 'green',
+      borderWidth: 2,
+      fill: false,
+      pointRadius: 0,
+    },
+    {
+      label: 'Blue',
+      data: Array.from({ length: 256 }, (_, i) => i),          // ← tu vector de 256 valores para azul
+      borderColor: 'blue',
+      borderWidth: 2,
+      fill: false,
+      pointRadius: 0,
+    },
+  ],
+};
+
+
+
 
   const options = {
     responsive: true,
@@ -65,85 +94,83 @@ function Editor() {
 
   return (
     <>
-    <Navbar />
-    <div className='editor-container'>
-
-      <div className='image-section'>
-        <h2>Imagen a editar</h2>
-        <img src="/NileBend.jpg" alt="Imagen a editar" className="editor-image" />
-      </div>
-
-      <div className='plot-secction'>
-        <h2>Transformación aplicada</h2>
-        <div className="plot-placeholder">
-          <Line data={data} options={options} />
+      <Navbar />
+      <div className='editor-container'>
+        <div className='image-section'>
+          <h2>Imagen a editar</h2>
+          <img src="/NileBend.jpg" alt="Imagen a editar" className="editor-image" />
         </div>
-        <div className='plot-parameters'>
 
-          <div className='red-channel'>
-            <p>Red channel:</p>
-            <div className='first-row'>
-              <label for="valueInput">q0: </label>
-              <input type="number" id="valueInput" Value={q0Red} min="0" max="255" onChange={(e) => handleQ0RedChange(e.target.value)} />
-              <input type="range" id="valueSlider" Value={q0Red} min="0" max="255" onChange={(e) => handleQ0RedChange(e.target.value)} />
-            </div>
-            <div className='second-row'>
-              <label for="valueInput">P1: </label>
-              <input type="number" id="valueInput" defaultValue={0} min="0" max="255" />
-              <label for="valueInput">P2: </label>
-              <input type="number" id="valueInput" defaultValue={255} min="0" max="255" />
-              <label for="valueInput">lambda: </label>
-              <input type="number" id="valueInput" min="0" max="1" />
-            </div>
-            <div className='third-row'>
-              <input type="range" id="valueSlider" defaultValue={0} min="0" max="1000" />
-            </div>
+        <div className='plot-secction'>
+          <h2>Transformación aplicada</h2>
+          <div className="plot-placeholder">
+            <Line data={data} options={options} />
           </div>
+          <div className='plot-parameters'>
+            <div className='red-channel'>
+              <p>Red channel:</p>
+              <div className='first-row'>
+                <label htmlFor="q0RedInput">q0: </label>
+                <input type="number" name="q0RedInput" ref={q0RedInputRef} defaultValue={128} min="0" max="255" />
+                <input type="range" name="q0RedSlider" ref={q0RedSliderRef} defaultValue={128} min="0" max="255" />
+              </div>
+              <div className='second-row'>
+                <label htmlFor="">P1: </label>
+                <input type="number" name="P1Red" defaultValue={0} min="0" max="255" />
+                <label htmlFor="">P2: </label>
+                <input type="number" name="P2Red" defaultValue={255} min="0" max="255" />
+                <label htmlFor="">lambda: </label>
+                <input type="number" name="lambdaRed" ref={lambdaRedInputRef} defaultValue={0} step="0.001" min="0" max="1" />
+              </div>
+              <div className='third-row'>
+                <input type="range" ref={lambdaRedSliderRef} defaultValue={0} step="0.001" min="0" max="1" />
+              </div>
+            </div>
 
-          <div className='green-channel'>
-            <p>green channel:</p>
-            <div className='first-row'>
-              <label for="valueInput">q0: </label>
-              <input type="number" id="valueInput"  Value={q0Green} min="0" max="255" onChange={(e) => handleQ0GreenChange(e.target.value)} />
-              <input type="range" id="valueSlider" Value={q0Green} min="0" max="255" onChange={(e) => handleQ0GreenChange(e.target.value)} />
+            <div className='green-channel'>
+              <p>Green channel:</p>
+              <div className='first-row'>
+                <label htmlFor="q0GreenInput">q0: </label>
+                <input type="number" name="q0GreenInput" ref={q0GreenInputRef} defaultValue={128} min="0" max="255" />
+                <input type="range" name="q0GreenSlider" ref={q0GreenSliderRef} defaultValue={128} min="0" max="255" />
+              </div>
+              <div className='second-row'>
+                <label htmlFor="">P1: </label>
+                <input type="number" name="P1Green" defaultValue={0} min="0" max="255" />
+                <label htmlFor="">P2: </label>
+                <input type="number" name="P2Green" defaultValue={255} min="0" max="255" />
+                <label htmlFor="">lambda: </label>
+                <input type="number" name="lambdaGreen" ref={lambdaGreenInputRef} defaultValue={0} step="0.001" min="0" max="1" />
+              </div>
+              <div className='third-row'>
+                <input type="range" ref={lambdaGreenSliderRef} defaultValue={0} step="0.001" min="0" max="1" />
+              </div>
             </div>
-            <div className='second-row'>
-              <label for="valueInput">P1: </label>
-              <input type="number" id="valueInput" defaultValue={0} min="0" max="255" />
-              <label for="valueInput">P2: </label>
-              <input type="number" id="valueInput" defaultValue={255} min="0" max="255" />
-              <label for="valueInput">lambda: </label>
-              <input type="number" id="valueInput" min="0" max="1" />
+
+            <div className='blue-channel'>
+              <p>Blue channel:</p>
+              <div className='first-row'>
+                <label htmlFor="q0BlueInput">q0: </label>
+                <input type="number" name="q0BlueInput" ref={q0BlueInputRef} defaultValue={128} min="0" max="255" />
+                <input type="range" name="q0BlueSlider" ref={q0BlueSliderRef} defaultValue={128} min="0" max="255" />
+              </div>
+              <div className='second-row'>
+                <label htmlFor="">P1: </label>
+                <input type="number" name="P1Blue" defaultValue={0} min="0" max="255" />
+                <label htmlFor="">P2: </label>
+                <input type="number" name="P2Blue" defaultValue={255} min="0" max="255" />
+                <label htmlFor="">lambda: </label>
+                <input type="number" name="lambdaBlue" ref={lambdaBlueInputRef} defaultValue={0} step="0.001" min="0" max="1" />
+              </div>
+              <div className='third-row'>
+                <input type="range" ref={lambdaBlueSliderRef} defaultValue={0} step="0.001" min="0" max="1" />
+              </div>
             </div>
-            <div className='third-row'>
-              <input type="range" id="valueSlider" defaultValue={0} min="0" max="1000" />
-            </div>
+
           </div>
-
-          <div className='blue-channel'>
-            <p>blue channel:</p>
-            <div className='first-row'>
-              <label for="valueInput">q0: </label>
-              <input type="number" id="valueInput" Value={q0Blue} min="0" max="255" onChange={(e) => handleQ0BlueChange(e.target.value)} />
-              <input type="range" id="valueSlider" Value={q0Blue} min="0" max="255" onChange={(e) => handleQ0BlueChange(e.target.value)} />
-            </div>
-            <div className='second-row'>
-              <label for="valueInput">P1: </label>
-              <input type="number" id="valueInput" defaultValue={0} min="0" max="255" />
-              <label for="valueInput">P2: </label>
-              <input type="number" id="valueInput" defaultValue={255} min="0" max="255" />
-              <label for="valueInput">lambda: </label>
-              <input type="number" id="valueInput" min="0" max="1" />
-            </div>
-            <div className='third-row'>
-              <input type="range" id="valueSlider" defaultValue={0} min="0" max="1000" />
-            </div>
-          </div>
-
         </div>
       </div>
-    </div>
-    <Footer/>
+      <Footer />
     </>
   );
 }

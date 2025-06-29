@@ -3,39 +3,52 @@ import Footer from '../components/Footer';
 import './Account.css'
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 function Account() {
 
   const [userData, setUserData] = useState(null);
+  const navigate = useNavigate();
 
   // Por ahora asumimos que el id del usuario es 1 (más adelante vendrá del login)
   const userId = 4;
 
   useEffect(() => {
-    fetch(`http://localhost:8000/users/${userId}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error("Error al obtener los datos del usuario");
+    fetch("http://localhost:8000/me", {
+      credentials: "include"
+    })
+      .then(res => {
+        if (!res.ok) {
+          navigate("/login");
+        } else {
+          return res.json();
         }
-        return response.json();
       })
-      .then(data => {
-        console.log("Datos del backend:", data);  // 👀 VERIFICACIÓN
-        setUserData(data)
-      })
-      .catch(error => console.error("Error:", error));
-  }, [userId]);
+      .then(data => setUserData(data))
+      .catch(() => navigate("/login"));
+  }, []);
 
   if (!userData) return <p>Cargando datos del usuario... {userData}</p>;
 
-  const testuser = {
-    nickname: 'Noland',
-    accountID: '1234',
-    username: 'No',
-    usersurname: 'Land',
-    email: 'noland@noemail.com',
-    registered: '2025-06-01',
-  };
+ const handleLogout = async () => {
+  try {
+    const response = await fetch("http://localhost:8000/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (response.ok) {
+      // Limpiar cualquier estado del usuario si lo guardas en frontend
+      navigate("/login");  // Redirigir al login después del logout
+    } else {
+      console.error("Error al cerrar sesión");
+    }
+  } catch (error) {
+    console.error("Error al conectar con el servidor:", error);
+  }
+};
+
 
   return (
     <>
@@ -55,7 +68,7 @@ function Account() {
       <div className='account-buttons'>
         <button>Editar perfil</button>
         <button>Cambiar contraseña</button>
-        <button className='logout'>Cerrar sesión</button>
+        <button className='logout' onClick={handleLogout}>Cerrar sesión</button>
       </div>
 
     </div>

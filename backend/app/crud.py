@@ -30,8 +30,9 @@ def get_user_by_nickname(db: Session, nickname: str)->Optional[dict]:
     result = db.execute(query, {"nickname" :nickname}).mappings().fetchone()
     return dict(result) if result else None
 
-def get_user_by_email(db: Session, email: str)->Optional[dict]:
-    query = text("SELECT * from users WHERE email = :email")
+def get_user_by_email(db: Session, email: str) -> Optional[dict]:
+    email = email.strip().lower()  # Normalizamos el email de entrada
+    query = text("SELECT * FROM users WHERE LOWER(TRIM(email)) = :email")
     result = db.execute(query, {"email" :email}).mappings().fetchone()
     return dict(result) if result else None
 

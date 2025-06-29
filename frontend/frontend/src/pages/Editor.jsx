@@ -8,10 +8,14 @@ import { useRef, useEffect, useState } from 'react';
 
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement } from 'chart.js';
+import { useNavigate } from "react-router-dom";
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 
 function Editor() {
+
+  const [userData, setUserData] = useState(null);
+  const navigate = useNavigate();
 
   //Para manipular la imagen
   const [imageSrc, setImageSrc] = useState(null);
@@ -40,6 +44,20 @@ function Editor() {
   reader.readAsDataURL(file);
 };
 
+  useEffect(() => {
+      fetch("http://localhost:8000/me", {
+        credentials: "include"
+      })
+        .then(res => {
+          if (!res.ok) {
+            navigate("/login");
+          } else {
+            return res.json();
+          }
+        })
+        .then(data => setUserData(data))
+        .catch(() => navigate("/login"));
+    }, []);
 
   useEffect(() => {
   if (!imageSrc || !canvasRef.current || !imageRef.current) return;

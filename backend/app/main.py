@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
+from fastapi.responses import JSONResponse
 
 #################### to test the db connection
 from sqlalchemy.orm import Session
@@ -23,7 +24,7 @@ app = FastAPI()
 # Agrega esto para permitir peticiones desde el frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173"],  # o ["*"] para permitir todo (inseguro)
+    allow_origins=["http://127.0.0.1:5173","http://localhost:5173"],  # o ["*"] para permitir todo (inseguro)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,6 +34,50 @@ app.add_middleware(
 def read_root():
     return {"message":"backend is running"}
 
+@app.post("/login")
+async def login(request: Request, db: Session = Depends(get_db)):
+    data = await request.json()
+    email = data.get("email")
+    password = data.get("password")
+
+    #Chequea si el usuario con ese email y contraseña existe
+    user = crud.get_user_by_email(db, email)
+    if user == None:
+        return JSONResponse({"error":"Email incorrecto"}, status_code=401)
+    
+    stored = crud.get_password_by_user_id(db, user["id"])
+    if stored == None or stored["password_hash"] != password:
+        return JSONResponse({"error":"Contraseña incorrecta"}, status_code=401)
+    
+    # Crear cookie de sesión insegura (id del usuario)
+    response = JSONResponse(content={"message":"Login exitoso", "user_id": user["id"]})
+    response.set_cookie(
+        key= "session_id",
+        value=str(user["id"]),
+        httponly=True, #Security risk
+        samesite="Lax" #Security risk
+    )
+
+    return response
+    
+@app.get("/me")
+def get_current_user(request: Request, db: Session = Depends(get_db)):
+    user_id = request.cookies.get("session_id")
+
+    if not user_id:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+    
+    user = crud.get_user_by_id(db, int(user_id))
+    if not user:
+        return JSONResponse({"error": "Usuario inválido"}, status_code=401)
+    
+    return user
+
+@app.post("/logout")
+def logout():
+    response = JSONResponse({"message": "Sesión cerrada"})
+    response.delete_cookie("session_id")
+    return response   
 
 @app.post("/register")
 async def register_user(request: Request, db: Session = Depends(get_db)):
@@ -80,8 +125,8 @@ def delete_user_route(user_id: int, db: Session = Depends(get_db)):
 #####DELETE THIS AFTER TEST############################
 @app.get("/dbtest")
 def test_db(db: Session = Depends(get_db)):
-    result = db.execute(text("SELECT * FROM passwords LIMIT 1")).fetchone()
-    return {"test_query": result[1] if result else "no users"}
+    result = db.execute(text("SELECT * FROM passwords")).mappings().all()
+    return {"test_query": result if result else "no users"}
 
 @app.get("/users")
 def list_all_users(db: Session = Depends(get_db)):

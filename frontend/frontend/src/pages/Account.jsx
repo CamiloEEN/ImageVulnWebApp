@@ -31,6 +31,14 @@ function Account() {
 
   if (!userData) return <p>Cargando datos del usuario... {userData}</p>;
 
+  const handleEditProfile = async() => {
+    navigate("/editProfile");
+  };
+
+  const handleChangePassword = async() => {
+    navigate("/ChangePassword");
+  };
+
  const handleLogout = async () => {
   try {
     const response = await fetch("http://localhost:8000/logout", {
@@ -66,8 +74,8 @@ function Account() {
         <p><strong>email:</strong> {userData.email}</p>
       </div>
       <div className='account-buttons'>
-        <button>Editar perfil</button>
-        <button>Cambiar contraseña</button>
+        <button className='edit-profile' onClick={handleEditProfile}>Editar perfil</button>
+        <button className='change-password' onClick={handleChangePassword}>Cambiar contraseña</button>
         <button className='logout' onClick={handleLogout}>Cerrar sesión</button>
       </div>
 

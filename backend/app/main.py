@@ -104,6 +104,48 @@ async def register_user(request: Request, db: Session = Depends(get_db)):
     return crud.get_user_by_id(db, new_user["id"])
 
 
+@app.post("/change-password")
+async def change_password(request: Request, db: Session = Depends(get_db)):
+    # Verifica que el usuario está autenticado
+    user_id = request.cookies.get("session_id")
+    #print("fue solicitado un cambio de contraseña")
+
+    if not user_id:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+    
+    
+    #obtiene la información para cambiar contraseña
+    data = await request.json()
+    current_password = data.get("current_password")
+    new_password = data.get("new_password")
+
+    stored = crud.get_password_by_user_id(db, user_id)
+
+    if current_password != stored["password_hash"] or stored["password_hash"] == None:
+        return JSONResponse({"error": "Contraseña actual incorrecta"}, status_code=403)
+    
+    if current_password == new_password:
+        return JSONResponse({"error":"La nueva contraseña debe ser diferente a la actual"}, status_code=403)
+    
+    crud.update_password(db, user_id, new_password)
+    return JSONResponse({"message":"Contraseña creada con éxito!"})
+
+@app.post("/edit-profile")
+async def edit_profile(request: Request, db: Session = Depends(get_db)):
+    # Verifica que el usuario está autenticado
+    user_id = request.cookies.get("session_id")
+    if not user_id:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+    
+    data = await request.json()
+    nickname = data.get("new_nickname")
+    username = data.get("new_username")
+    usersurname = data.get("new_usersurname")
+    email = data.get("new_email")
+
+    crud.update_user(db, user_id, nickname, username, usersurname, email)
+    return JSONResponse({"message":"Perfil actualizado con éxito!"})
+
 ################ THE CODE BELOW IS ONLY FOR TESTING#####################
 
 #########CRUD USERS FOR TESTING ONLY###################

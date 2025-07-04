@@ -44,7 +44,7 @@ def update_user(db: Session, user_id: int, nickname: str, username: str, usersur
         WHERE id = :user_id
         RETURNING id, nickname, username, usersurname, email
     """)
-    result = db.execute(query, {"nickname": nickname, "username": username, "usersurname": usersurname, "email": email}).mappings().fetchone()
+    result = db.execute(query, {"user_id":user_id ,"nickname": nickname, "username": username, "usersurname": usersurname, "email": email}).mappings().fetchone()
     db.commit()
     return dict(result) if result else {}
 

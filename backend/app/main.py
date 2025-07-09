@@ -1,7 +1,10 @@
-from fastapi import FastAPI, Depends, Request
+import os
+from fastapi import FastAPI, Depends, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 from fastapi.responses import JSONResponse
+#from uuid import uuid4
+from datetime import datetime
 
 #################### to test the db connection
 from sqlalchemy.orm import Session
@@ -146,6 +149,59 @@ async def edit_profile(request: Request, db: Session = Depends(get_db)):
     crud.update_user(db, user_id, nickname, username, usersurname, email)
     return JSONResponse({"message":"Perfil actualizado con éxito!"})
 
+
+
+@app.post("/upload_edited_image")
+async def upload_edited_image(request: Request, file: UploadFile = File(...), db: Session = Depends(get_db)):
+
+    # Verifica que el usuario está autenticado
+    user_id = request.cookies.get("session_id")
+    if not user_id:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+    
+    # Leer contenido de la imagen
+    contents = await file.read()
+
+    # Crear nombre del archivo: user_id_YYYYMMDD_HHMMSS.png
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    filename = f"{user_id}_{timestamp}.png"
+    
+    filepath = os.path.join(os.path.dirname(__file__), "static", "edited_images", filename)
+    with open(filepath, "wb") as f:
+        f.write(contents)
+
+    # Registrar en la base de datos
+    image = crud.create_image(
+    db=db,
+    user_id=int(user_id),
+    filename=filename,
+    mime_type=file.content_type,
+    size=len(contents)
+    )
+
+    return {
+        "message": "Imagen guardada exitosamente",
+        "image_url": f"/edited_images/{filename}",
+        "image_id": image["id"]
+    }
+
+
+@app.post("/transform")
+async def transform(request: Request):
+
+    data = await request.json()
+
+    print(data)
+    # Simulamos una transformación: identidad
+    red = list(range(256))
+    green = list(reversed(range(256)))
+    blue = list(range(256))
+
+    return {
+        "redArray": red,
+        "greenArray": green,
+        "blueArray": blue
+    }
 ################ THE CODE BELOW IS ONLY FOR TESTING#####################
 
 #########CRUD USERS FOR TESTING ONLY###################

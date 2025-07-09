@@ -32,7 +32,7 @@
   display: none;
 }
 
-.apply-button {
+.apply-button, .post-button, .download-button {
   margin-top: 15px;
   padding: 10px 20px;
   font-size: 16px;
@@ -45,6 +45,12 @@
 }
 
 .apply-button:hover {
+  background-color: #0056b3;
+}
+.post-button:hover {
+  background-color: #0056b3;
+}
+.download-button:hover {
   background-color: #0056b3;
 }
 

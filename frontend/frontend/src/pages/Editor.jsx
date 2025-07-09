@@ -3,12 +3,14 @@ import Footer from '../components/Footer';
 import { applyTransformation } from '../utils/applyTransformation';
 import './Editor.css';
 
-import { data, defaultChartOptions } from '../utils/chartConfig';
+import { data, defaultChartOptions, createDefaultChartData } from '../utils/chartConfig';
 import { useRef, useEffect, useState } from 'react';
 
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement } from 'chart.js';
 import { useNavigate } from "react-router-dom";
+
+import {handleImageUpload, handleApply, handlePostImage, handleDownloadImage } from '../utils/editorHandlers';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 
@@ -22,27 +24,11 @@ function Editor() {
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
 
-  const handleImageUpload = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    setImageSrc(reader.result); // Esto actualiza el src de <img>
-
-    // Esperar a que la imagen cargue completamente antes de dibujarla en el canvas
-    const img = new Image();
-    img.onload = () => {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      ctx.drawImage(img, 0, 0);
-    };
-    img.src = reader.result;
-  };
-  reader.readAsDataURL(file);
-};
+  const [chartData, setChartData] = useState(createDefaultChartData(
+  Array.from({ length: 256 }, (_, i) => i), // red
+  Array.from({ length: 256 }, (_, i) => i), // green
+  Array.from({ length: 256 }, (_, i) => i)  // blue
+));
 
   useEffect(() => {
       fetch("http://localhost:8000/me", {
@@ -72,29 +58,6 @@ function Editor() {
     ctx.drawImage(img, 0, 0);
   };
   }, [imageSrc]);
-
-  const handleApply = () => {
-    const img = imageRef.current;
-    const canvas = canvasRef.current;
-    if (!img || !canvas) return;
-
-    // Establecer dimensiones del canvas para que coincidan con la imagen
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-
-    // Simular arreglos del backend
-    const redArray = Array.from({ length: 256 }, (_, i) => i);
-    const greenArray = Array.from({ length: 256 }, (_, i) => i);
-    const blueArray = Array.from({ length: 256 }, (_, i) => i);
-
-    // Aplicar transformación
-    const resultCanvas = applyTransformation(img, redArray, greenArray, blueArray);
-    const ctx = canvas.getContext('2d');
-
-    // Limpiar y redibujar en el canvas visible
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(resultCanvas, 0, 0);
-  };
 
   //Sincronizar sliders con parametros
   const q0RedInputRef = useRef(null);
@@ -141,7 +104,7 @@ function Editor() {
       <div className='editor-container'>
         <div className="image-section">
           <h2>Imagen a editar</h2>
-          <input type="file" accept="image/*" onChange={handleImageUpload} />
+          <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, setImageSrc, canvasRef)} />
           {imageSrc && (
             <div className="image-preview-container">
               <img
@@ -151,9 +114,19 @@ function Editor() {
                 className="original-image"
               />
               <canvas ref={canvasRef} className="editor-canvas" />
-              <button onClick={handleApply} className="apply-button">
-                Aplicar transformación
-              </button>
+              <button className='apply-button' onClick={() => handleApply({
+                  imageRef,
+                  canvasRef,
+                  q0RedInputRef,
+                  q0GreenInputRef,
+                  q0BlueInputRef,
+                  lambdaRedInputRef,
+                  lambdaGreenInputRef,
+                  lambdaBlueInputRef,
+                  setChartData // si decides implementar gráfica dinámica
+                })}>Aplicar transformación</button>
+              <button className='post-button' onClick={() => handlePostImage(canvasRef)}>Publicar</button>
+              <button className='download-button' onClick={() => handleDownloadImage(canvasRef)}>Descargar</button>
             </div>
           )}
         </div>
@@ -161,7 +134,7 @@ function Editor() {
         <div className='plot-secction'>
           <h2>Transformación aplicada</h2>
           <div className="plot-placeholder">
-            <Line data={data} options={defaultChartOptions} />
+            <Line data={chartData} options={defaultChartOptions} />
           </div>
           <div className='plot-parameters'>
             <div className='red-channel'>

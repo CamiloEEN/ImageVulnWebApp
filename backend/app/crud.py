@@ -87,3 +87,34 @@ def update_password(db: Session, user_id: int, password_hash: str) -> dict:
 ###### FOR OBVIOUS REASONS THERE IS NO DELETE PASSWORD, THEY ARE ONLY DELETED IF THE USER IS DELETED
 
 
+############################ TABLE IMAGES CRUD ####################
+
+def create_image(db: Session, user_id: int, filename: str, mime_type: str, size: int) -> dict:
+    query = text("""
+        INSERT INTO images (user_id, filename, mime_type, size)
+        VALUES (:user_id, :filename, :mime_type, :size)
+        RETURNING id, user_id, filename, mime_type, size
+    """)
+    result = db.execute(query, {
+        "user_id": user_id,
+        "filename": filename,
+        "mime_type": mime_type,
+        "size": size
+    }).mappings().fetchone()
+    db.commit()
+    return dict(result)
+
+def get_image_by_id(db: Session, image_id: int) -> Optional[dict]:
+    query = text("SELECT * FROM images WHERE id = :image_id")
+    result = db.execute(query, {"image_id": image_id}).mappings().fetchone()
+    return dict(result) if result else None
+
+def get_images_by_user_id(db: Session, user_id: int) -> list[dict]:
+    query = text("SELECT * FROM images WHERE user_id = :user_id ORDER BY uploaded_at DESC")
+    results = db.execute(query, {"user_id": user_id}).mappings().fetchall()
+    return [dict(row) for row in results]
+
+def delete_image_by_id(db: Session, image_id: int) -> None:
+    query = text("DELETE FROM images WHERE id = :image_id")
+    db.execute(query, {"image_id": image_id})
+    db.commit()

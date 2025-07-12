@@ -13,6 +13,8 @@ from sqlalchemy import text
 from .database import SessionLocal
 from . import crud
 
+from fastapi.staticfiles import StaticFiles
+
 def get_db():
     db = SessionLocal()
     try:
@@ -22,6 +24,9 @@ def get_db():
 ########################################################
 
 app = FastAPI()
+
+# Sirve la carpeta de imágenes editadas como archivos estáticos
+app.mount("/edited_images", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static", "edited_images")), name="edited_images")
 
 
 # Agrega esto para permitir peticiones desde el frontend
@@ -148,8 +153,78 @@ async def edit_profile(request: Request, db: Session = Depends(get_db)):
 
     crud.update_user(db, user_id, nickname, username, usersurname, email)
     return JSONResponse({"message":"Perfil actualizado con éxito!"})
+# ================== ENDPOINTS PARA EXPLORE ===================
+
+@app.get("/explore/posts")
+def get_all_posts_endpoint(request: Request, db: Session = Depends(get_db)):
+    posts = crud.get_all_posts(db)
+
+    # Adjuntar el nombre de la imagen desde la tabla images
+    for post in posts:
+        image = crud.get_image_by_id(db, post["image_id"])
+        post["image_filename"] = image["filename"] if image else None
+    return posts
+
+@app.get("/explore/comments/")
+def get_comments(post_id: int, db: Session = Depends(get_db)):
+    return crud.get_comments_by_post_id(db, post_id)
+
+@app.post("/explore/comments/")
+async def post_comment(request: Request, db: Session = Depends(get_db)):
+    user_id = request.cookies.get("session_id")
+    if not user_id:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+
+    data = await request.json()
+    post_id = data.get("post_id")
+    content = data.get("content")
+
+    if not post_id or not content:
+        return JSONResponse({"error": "Faltan campos obligatorios"}, status_code=400)
+
+    comment = crud.create_comment(db, post_id, int(user_id), content)
+    return comment
+
+@app.get("/explore/likes/count/")
+def count_likes(post_id: int, db: Session = Depends(get_db)):
+    count = crud.count_likes_by_post_id(db, post_id)
+    return {"count": count}
+
+@app.post("/explore/likes/")
+async def like_post(request: Request, db: Session = Depends(get_db)):
+    user_id = request.cookies.get("session_id")
+    if not user_id:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+
+    data = await request.json()
+    post_id = data.get("post_id")
+
+    if not post_id:
+        return JSONResponse({"error": "Falta post_id"}, status_code=400)
+
+    existing = crud.get_like_by_user_and_post(db, int(user_id), post_id)
+    if existing:
+        return JSONResponse({"error": "Ya le diste like"}, status_code=400)
+
+    return crud.create_like(db, post_id, int(user_id))
+
+@app.delete("/explore/likes/")
+async def unlike_post(request: Request, db: Session = Depends(get_db)):
+    user_id = request.cookies.get("session_id")
+    if not user_id:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+
+    data = await request.json()
+    post_id = data.get("post_id")
+
+    if not post_id:
+        return JSONResponse({"error": "Falta post_id"}, status_code=400)
+
+    crud.delete_like(db, int(user_id), post_id)
+    return {"message": "Like eliminado"}
 
 
+# ================== ENDPOINTS PARA EDITOR ===================
 
 @app.post("/upload_edited_image")
 async def upload_edited_image(request: Request, file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -202,6 +277,28 @@ async def transform(request: Request):
         "greenArray": green,
         "blueArray": blue
     }
+
+@app.get("/posts/")
+def read_all_posts():
+    return crud.get_all_posts()
+
+@app.post("/posts/")
+async def create_post_endpoint(request: Request, db: Session = Depends(get_db)):
+    user_id = request.cookies.get("session_id")
+    if not user_id:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+    
+    data = await request.json()
+    title = data.get("title")
+    descrition = data.get("descrition")
+    image_id = data.get("image_id")
+
+    if not title or not descrition or not image_id:
+        return JSONResponse({"error": "Faltan campos obligatorios"}, status_code=400)
+    
+    post = crud.create_post(db, title, descrition, int(user_id), image_id)
+    return post
+
 ################ THE CODE BELOW IS ONLY FOR TESTING#####################
 
 #########CRUD USERS FOR TESTING ONLY###################

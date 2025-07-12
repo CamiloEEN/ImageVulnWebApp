@@ -113,23 +113,48 @@ export async function handlePostImage(canvasRef) {
     formData.append("file", blob, "edited_image.png");
 
     try {
-      const response = await fetch("http://localhost:8000/upload_edited_image", {
+      const uploadResponse = await fetch("http://localhost:8000/upload_edited_image", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        alert("Imagen publicada correctamente.");
-        console.log("📸 Imagen publicada:", data.image_url);
-      } else {
-        const err = await response.json();
-        alert(`Error: ${err.error}`);
+      if (!uploadResponse.ok) {
+        const err = await uploadResponse.json();
+        alert(`Error al subir imagen: ${err.error}`);
+        return;
       }
+
+      const uploadData = await uploadResponse.json();
+      const imageId = uploadData.image_id;
+
+      // Ahora crear el post asociado
+      const title = prompt("Título de la publicación:");
+      const description = prompt("Descripción:");
+
+      const postResponse = await fetch("http://localhost:8000/posts/", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          descrition: description,
+          image_id: imageId,
+        }),
+      });
+
+      if (postResponse.ok) {
+        alert("✅ Imagen publicada correctamente como post.");
+      } else {
+        const err = await postResponse.json();
+        alert(`Error al crear post: ${err.error}`);
+      }
+
     } catch (err) {
-      console.error("❌ Error al subir la imagen:", err);
-      alert("Fallo al subir imagen.");
+      console.error("❌ Error general:", err);
+      alert("Error inesperado al publicar la imagen.");
     }
   }, "image/png");
 }

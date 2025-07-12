@@ -118,3 +118,155 @@ def delete_image_by_id(db: Session, image_id: int) -> None:
     query = text("DELETE FROM images WHERE id = :image_id")
     db.execute(query, {"image_id": image_id})
     db.commit()
+
+
+############################ TABLE POSTS CRUD ####################
+def create_post(db: Session, title: str, description: str, user_id: int, image_id: int):
+    query = text("""
+        INSERT INTO posts (title, description, user_id, image_id)
+        VALUES (:title, :description, :user_id, :image_id)
+        RETURNING id, title, description, created_at, user_id, image_id
+    """)
+    result = db.execute(query, {"title":title, "description":description, "user_id":user_id, "image_id":image_id}).mappings().fetchone()
+    db.commit()
+
+    return dict(result)
+
+def get_post_by_id(db: Session, post_id: int):
+    query = text("SELECT * FROM posts WHERE id = :post_id")
+    result = db.execute(query, {"post_id":post_id}).mappings().fetchone()
+    return dict(result) if result else None
+    pass
+
+def get_posts_by_user_id(db: Session, user_id: int):
+    query = text("SELECT * FROM posts WHERE user_id = :user_id ORDER BY created_at DESC")
+    result = db.execute(query, {"user_id": user_id}).mappings().fetchall()
+    return [dict(row) for row in result]
+
+def get_all_posts(db: Session):
+    query = text("SELECT * FROM posts ORDER BY created_at DESC")
+    result = db.execute(query).mappings().fetchall()
+    return [dict(row) for row in result]
+
+def update_post(db: Session, post_id: int, title: str, description: str):
+    query = text("""
+        UPDATE posts
+        SET title = :title, description = :description
+        WHERE id = :post_id
+        RETURNING id, title, description, created_at, user_id, image_id
+    """)
+    result = db.execute(query, {
+        "post_id": post_id,
+        "title": title,
+        "description": description
+    }).mappings().fetchone()
+    db.commit()
+    return dict(result) if result else None
+
+def delete_post(db: Session, post_id: int):
+    query = text("DELETE FROM posts WHERE id = :post_id")
+    db.execute(query, {"post_id": post_id})
+    db.commit()
+    return {"message": "Post deleted successfully"}
+
+############################ TABLE COMMENTS CRUD ####################
+# Crear un nuevo comentario
+def create_comment(db, post_id, user_id, content):
+    query = text("""
+        INSERT INTO comments (post_id, user_id, content)
+        VALUES (:post_id, :user_id, :content)
+        RETURNING id, post_id, user_id, content, created_at
+    """)
+    result = db.execute(query, {
+        "post_id": post_id,
+        "user_id": user_id,
+        "content": content,
+    }).mappings().fetchone()
+    db.commit()
+    return dict(result)
+
+# Obtener un comentario por su ID
+def get_comment_by_id(db, comment_id):
+    query = text("SELECT * FROM comments WHERE id = :comment_id")
+    result = db.execute(query, {"comment_id": comment_id}).mappings().fetchone()
+    return dict(result) if result else None
+
+# Obtener todos los comentarios para un post específico
+def get_comments_by_post_id(db, post_id):
+    query = text("SELECT * FROM comments WHERE post_id = :post_id ORDER BY created_at ASC")
+    results = db.execute(query, {"post_id": post_id}).mappings().fetchall()
+    return [dict(row) for row in results]
+
+# Obtener todos los comentarios hechos por un usuario
+def get_comments_by_user_id(db, user_id):
+    query = text("SELECT * FROM comments WHERE user_id = :user_id ORDER BY created_at DESC")
+    results = db.execute(query, {"user_id": user_id}).mappings().fetchall()
+    return [dict(row) for row in results]
+
+# Actualizar el contenido de un comentario
+def update_comment(db, comment_id, new_content):
+    query = text("""
+        UPDATE comments
+        SET content = :new_content
+        WHERE id = :comment_id
+        RETURNING id, post_id, user_id, content, created_at
+    """)
+    result = db.execute(query, {
+        "comment_id": comment_id,
+        "new_content": new_content
+    }).mappings().fetchone()
+    db.commit()
+    return dict(result) if result else None
+
+# Eliminar un comentario
+def delete_comment(db, comment_id):
+    query = text("DELETE FROM comments WHERE id = :comment_id")
+    db.execute(query, {"comment_id": comment_id})
+    db.commit()
+
+############################ TABLE LIKES CRUD ####################
+# Crear un nuevo "like"
+def create_like(db, post_id, user_id):
+    query = text("""
+        INSERT INTO likes (post_id, user_id)
+        VALUES (:post_id, :user_id)
+        RETURNING id, post_id, user_id, created_at
+    """)
+    result = db.execute(query, {
+        "post_id": post_id,
+        "user_id": user_id
+    }).mappings().fetchone()
+    db.commit()
+    return dict(result)
+
+# Verificar si un usuario ya dio like a un post
+def get_like_by_user_and_post(db, user_id, post_id):
+    query = text("SELECT * FROM likes WHERE user_id = :user_id AND post_id = :post_id")
+    result = db.execute(query, {
+        "user_id": user_id,
+        "post_id": post_id
+    }).mappings().fetchone()
+    return dict(result) if result else None
+
+# Obtener todos los likes de un post
+def get_likes_by_post_id(db, post_id):
+    query = text("SELECT * FROM likes WHERE post_id = :post_id")
+    results = db.execute(query, {"post_id": post_id}).mappings().fetchall()
+    return [dict(row) for row in results]
+
+# Contar likes de un post
+def count_likes_by_post_id(db, post_id):
+    query = text("SELECT COUNT(*) FROM likes WHERE post_id = :post_id")
+    result = db.execute(query, {"post_id": post_id}).scalar()
+    return result
+
+# Eliminar un like (unlike)
+def delete_like(db, user_id, post_id):
+    query = text("DELETE FROM likes WHERE user_id = :user_id AND post_id = :post_id")
+    db.execute(query, {
+        "user_id": user_id,
+        "post_id": post_id
+    })
+    db.commit()
+
+############################ TABLE History CRUD ####################

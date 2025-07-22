@@ -15,6 +15,8 @@ from . import crud
 
 from fastapi.staticfiles import StaticFiles
 
+import app.modTanhCEEN as sfunc
+
 def get_db():
     db = SessionLocal()
     try:
@@ -266,11 +268,40 @@ async def transform(request: Request):
 
     data = await request.json()
 
-    print(data)
-    # Simulamos una transformación: identidad
-    red = list(range(256))
-    green = list(reversed(range(256)))
-    blue = list(range(256))
+    print(data['red']['q0'])
+    # red transform
+    q0 = data['red']['q0']
+    p1 = data['red']['P1']
+    p2 = data['red']['P2']
+    lam = data['red']['lambda']
+
+    c_coef = sfunc.C_Coef(p1, p2, lam, q0)
+    d_coef = sfunc.D_Coef(p1, p2, lam, q0)
+
+    red = [sfunc.modTanh(p1,p2,lam,q0, q, c_coef, d_coef) for q in range(256)]
+
+    # green transform
+    q0 = data['green']['q0']
+    p1 = data['green']['P1']
+    p2 = data['green']['P2']
+    lam = data['green']['lambda']
+
+    c_coef = sfunc.C_Coef(p1, p2, lam, q0)
+    d_coef = sfunc.D_Coef(p1, p2, lam, q0)
+
+    green = [sfunc.modTanh(p1,p2,lam,q0, q, c_coef, d_coef) for q in range(256)]
+
+    # blue transform
+    q0 = data['blue']['q0']
+    p1 = data['blue']['P1']
+    p2 = data['blue']['P2']
+    lam = data['blue']['lambda']
+
+    c_coef = sfunc.C_Coef(p1, p2, lam, q0)
+    d_coef = sfunc.D_Coef(p1, p2, lam, q0)
+
+    blue = [sfunc.modTanh(p1,p2,lam,q0, q, c_coef, d_coef) for q in range(256)]
+
 
     return {
         "redArray": red,

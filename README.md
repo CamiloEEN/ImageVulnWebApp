@@ -30,8 +30,7 @@ inseura-app/
 |--------------|-------------------------------|
 | Frontend     | React + Vite + JavaScript     |
 | Backend      | FastAPI + Python 3            |
-| Auth         | JWT / manejo de sesiones      |
-| Base de datos| SQLite (o PostgreSQL)         |
+| Base de datos| PostgreSQL 16                 |
 | Contenedores | Docker + docker-compose       |
 | Edición      | HTML5 Canvas + JS             |
 | Vulnerabilidades | XSS, CSRF, Broken Auth, etc. |
@@ -44,8 +43,8 @@ inseura-app/
 - Carga de imágenes desde el navegador.
 - Aplicación de filtros de edición de contraste (transformación no lineal).
 - Interfaz simple e interactiva.
-- Backend retorna un **vector de 256 valores** que describe la transformación.
 - Transformación aplicada directamente en el **frontend** (no se envía la imagen al servidor).
+- Se pueden publicar resultados y se guardan en la base de datos.
 
 ---
 

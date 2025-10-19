@@ -16,6 +16,7 @@ from . import crud
 from fastapi.staticfiles import StaticFiles
 
 import app.modTanhCEEN as sfunc
+from app import models
 
 def get_db():
     db = SessionLocal()
@@ -26,6 +27,13 @@ def get_db():
 ########################################################
 
 app = FastAPI()
+
+# Intento de corregir el problema de comunicaciòn con la DB
+@app.on_event("startup")
+def startup_event():
+    print("🔧 Initializing database schema...")
+    Base.metadata.create_all(bind=engine)
+    print("✅ Database initialized successfully!")
 
 # Sirve la carpeta de imágenes editadas como archivos estáticos
 app.mount("/edited_images", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static", "edited_images")), name="edited_images")

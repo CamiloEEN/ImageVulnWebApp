@@ -15,6 +15,9 @@ FROM nginx:alpine
 # Copia la build desde la etapa anterior
 COPY --from=build /app/dist /usr/share/nginx/html
 
+# ✅ Copia tu configuración personalizada de Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 # Expone el puerto 80 (por defecto de nginx)
 EXPOSE 80
 

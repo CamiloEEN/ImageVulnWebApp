@@ -72,7 +72,7 @@ async def login(request: Request, db: Session = Depends(get_db)):
     response.set_cookie(
         key= "session_id",
         value=str(user["id"]),
-        httponly=True, #Security risk
+        httponly=False, #Security risk
         samesite="Lax" #Security risk
     )
 

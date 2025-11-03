@@ -63,8 +63,11 @@ async def login(request: Request, db: Session = Depends(get_db)):
     if user == None:
         return JSONResponse({"error":"Email incorrecto"}, status_code=401)
     
-    stored = crud.get_password_by_user_id(db, user["id"])
-    if stored == None or stored["password_hash"] != password:
+    
+    #stored = crud.get_password_by_user_id(db, user["id"])
+    #if stored == None or stored["password_hash"] != password:
+        #return JSONResponse({"error":"Contraseña incorrecta"}, status_code=401)
+    if crud.check_password(db, user["id"], password) == None:
         return JSONResponse({"error":"Contraseña incorrecta"}, status_code=401)
     
     # Crear cookie de sesión insegura (id del usuario)

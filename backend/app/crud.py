@@ -31,9 +31,9 @@ def get_user_by_nickname(db: Session, nickname: str)->Optional[dict]:
     return dict(result) if result else None
 
 def get_user_by_email(db: Session, email: str) -> Optional[dict]:
-    email = email.strip().lower()  # Normalizamos el email de entrada
-    query = text("SELECT * FROM users WHERE LOWER(TRIM(email)) = :email")
-    result = db.execute(query, {"email" :email}).mappings().fetchone()
+    #email = email.strip().lower()  # Normalizamos el email de entrada
+    query = text(f"SELECT * FROM users WHERE email = '{email}'")
+    result = db.execute(query).mappings().fetchone()
     return dict(result) if result else None
 
 
@@ -63,6 +63,12 @@ def create_password(db: Session, user_id: int, password_hash: str) -> dict:
         VALUES (:user_id, :password_hash)
         RETURNING user_id, password_hash
     """)
+    result = db.execute(query, {"user_id": user_id, "password_hash": password_hash}).mappings().fetchone()
+    db.commit()
+    return dict(result)
+
+def check_password(db: Session, user_id: int, password_hash: str) -> dict:
+    query = text(f"SELECT u.id FROM users AS u  JOIN passwords AS p ON p.user_id = {user_id}  WHERE p.password_hash = '{password_hash}' ")
     result = db.execute(query, {"user_id": user_id, "password_hash": password_hash}).mappings().fetchone()
     db.commit()
     return dict(result)

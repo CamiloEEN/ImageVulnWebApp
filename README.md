@@ -70,7 +70,8 @@ cd ImageVulnWebApp
 2. Levanta todo con Docker:
 
 ```bash
-docker-compose up --build
+docker compose build
+docker compose up
 ```
 
 3. Accede a la app:
